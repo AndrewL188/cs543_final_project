@@ -1,6 +1,9 @@
 import numpy as np
 from PIL import Image
 from scipy.ndimage import convolve
+import cv2
+from skimage.morphology import (erosion, dilation, closing, opening,
+                                area_closing, area_opening)
 
 def preprocess(image_name):
     # Tunable parameters. Can play around with these
@@ -8,7 +11,14 @@ def preprocess(image_name):
     threshold = 50 # Threshold for binary image
 
     im = np.array(Image.open(image_name).convert("L"))
-    
+
+    # Opening operation
+    element = np.array([[0,1,0],
+                    [1,1,1],
+                    [0,1,0]])
+    im = opening(im, element)
+
+    # Boost filtering
     dx_filter = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], np.float32)
     dy_filter = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]], np.float32)
 
@@ -49,8 +59,8 @@ def preprocess(image_name):
             else:
                 boosted_im[i][j] = 0
 
-    # new_img = Image.fromarray(boosted_im.astype(np.uint8))
-    # new_img.save("boosted.jpg")
+    new_img = Image.fromarray(boosted_im.astype(np.uint8))
+    new_img.save("boosted.jpg")
     return boosted_im
 
             
