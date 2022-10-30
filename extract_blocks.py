@@ -2,21 +2,29 @@ import numpy as np
 from PIL import Image
 from scipy.ndimage import convolve
 import cv2
+from scipy import ndimage
 from skimage.morphology import (erosion, dilation, closing, opening,
                                 area_closing, area_opening)
 
 def preprocess(image_name):
     # Tunable parameters. Can play around with these
-    f = 10 # Boosting factor
-    threshold = 50 # Threshold for binary image
+    f = 11 # Boosting factor
+    threshold = 20 # Threshold for binary image
 
     im = np.array(Image.open(image_name).convert("L"))
+
+    # Sharpen image
+    alpha = 0.05
+    blurred = ndimage.gaussian_filter(im, 2)
+    sharpened = im + alpha*(im-blurred)
+    # new_img = Image.fromarray(sharpened.astype(np.uint8))
+    # new_img.save("sharpened.jpg")
 
     # Opening operation
     element = np.array([[0,1,0],
                     [1,1,1],
                     [0,1,0]])
-    im = opening(im, element)
+    im = opening(sharpened, element)
 
     # Boost filtering
     dx_filter = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], np.float32)
@@ -54,7 +62,7 @@ def preprocess(image_name):
     
     for i in range(1, im.shape[0]-1):
         for j in range(1, im.shape[1]-1):
-            if boosted_im[i][j] < threshold:
+            if boosted_im[i][j] > threshold:
                 boosted_im[i][j] = 255
             else:
                 boosted_im[i][j] = 0
@@ -64,4 +72,5 @@ def preprocess(image_name):
     return boosted_im
 
             
-preprocess('data/Friends/Train/Joey/joey (16).jpg')
+# preprocess('data/Friends/Train/Joey/joey (16).jpg')
+preprocess('data/leonardo.jpg')
