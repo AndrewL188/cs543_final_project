@@ -67,10 +67,56 @@ def preprocess(image_name):
             else:
                 boosted_im[i][j] = 0
 
-    new_img = Image.fromarray(boosted_im.astype(np.uint8))
-    new_img.save("boosted.jpg")
+    # new_img = Image.fromarray(boosted_im.astype(np.uint8))
+    # new_img.save("boosted.jpg")
     return boosted_im
+
+# Returns the neighbors of a given point
+def neighbors(im, point):
+    res = []
+    if (point[0] < im.shape[0] - 1):
+        res.append((point[0]+1, point[1]))
+    if (point[0] > 1):
+        res.append((point[0]-1, point[1]))
+    if (point[1] < im.shape[1] - 1):
+        res.append((point[0], point[1]+1))
+    if (point[1] > 1):
+        res.append((point[0], point[1]-1))
+    return res
+
+def search(labeled_im, cur_label, r, c):
+    stack = []
+    stack.append((r,c))
+    while stack:
+        cur_node = stack.pop()
+        labeled_im[cur_node[0]][cur_node[1]] = cur_label
+        cur_neighbors = neighbors(labeled_im, cur_node)
+        for i,j in cur_neighbors:
+            if (labeled_im[i][j] == -1):
+                stack.append((i,j))
+
+def find_components(labeled_im):
+    cur_label = 0
+    for i in range(labeled_im.shape[0]):
+        for j in range(labeled_im.shape[1]):
+            if labeled_im[i][j] == -1:
+                cur_label += 1
+                search(labeled_im, cur_label, i, j)
+    print(str(cur_label) + " connected components")
+    return labeled_im
+
+def label(im):
+    labeled_im = np.zeros(im.shape)
+    for i in range(labeled_im.shape[0]):
+        for j in range(labeled_im.shape[1]):
+            if im[i][j] == 0:
+                labeled_im[i][j] = -1
+            else:
+                labeled_im[i][j] = 0
+    
+    return find_components(labeled_im)
 
             
 # preprocess('data/Friends/Train/Joey/joey (16).jpg')
-preprocess('data/leonardo.jpg')
+im = preprocess('data/leonardo.jpg')
+labeled_im = label(im)
