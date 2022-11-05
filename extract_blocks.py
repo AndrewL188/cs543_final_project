@@ -168,6 +168,8 @@ def find_blocks_within_radius(labeled_im, x_bar, y_bar, radius):
                 if labeled_im[x,y] not in blocks_within_radius:
                     blocks_within_radius.append(labeled_im[x,y])
 
+        return blocks_within_radius
+
 
 def find_nearest_block(cur_block_idx, blocks_within_radius, x_bar, y_bar):
     min_distance_block = 0
