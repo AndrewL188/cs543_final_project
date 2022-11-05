@@ -120,3 +120,5 @@ def label(im):
 # preprocess('data/Friends/Train/Joey/joey (16).jpg')
 im = preprocess('data/leonardo.jpg')
 labeled_im = label(im)
+
+#push test comment
