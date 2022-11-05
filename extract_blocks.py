@@ -103,7 +103,7 @@ def find_components(labeled_im):
                 cur_label += 1
                 search(labeled_im, cur_label, i, j)
     print(str(cur_label) + " connected components")
-    return labeled_im, cur_label
+    return labeled_im
 
 def label(im):
     labeled_im = np.zeros(im.shape)
@@ -167,9 +167,8 @@ def find_blocks_within_radius(labeled_im, x_bar, y_bar, radius):
             if labeled_im[x,y] != 0:
                 if labeled_im[x,y] not in blocks_within_radius:
                     blocks_within_radius.append(labeled_im[x,y])
-
+    
     return blocks_within_radius
-
 
 def find_nearest_block(cur_block_idx, blocks_within_radius, x_bar, y_bar):
     min_distance_block = 0
