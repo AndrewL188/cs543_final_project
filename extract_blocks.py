@@ -103,7 +103,7 @@ def find_components(labeled_im):
                 cur_label += 1
                 search(labeled_im, cur_label, i, j)
     print(str(cur_label) + " connected components")
-    return labeled_im
+    return labeled_im, cur_label
 
 def label(im):
     labeled_im = np.zeros(im.shape)
@@ -119,7 +119,7 @@ def label(im):
             
 # preprocess('data/Friends/Train/Joey/joey (16).jpg')
 im = preprocess('data/leonardo.jpg')
-labeled_im = label(im)
+labeled_im, cur_label = label(im)
 
 ############ Calculating centre of mass and orientation and grouping ############
 def calculate_mu(x_coords, y_coords, x_bar, y_bar, p, q):
