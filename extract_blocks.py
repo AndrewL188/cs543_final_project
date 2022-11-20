@@ -9,7 +9,7 @@ from skimage.morphology import (erosion, dilation, closing, opening,
 def preprocess(image_name):
     # Tunable parameters. Can play around with these
     f = 11 # Boosting factor
-    threshold = 20 # Threshold for binary image
+    threshold = 10 # Threshold for binary image
 
     im = np.array(Image.open(image_name).convert("L"))
 
@@ -116,11 +116,38 @@ def label(im):
     
     return find_components(labeled_im)
 
-            
+import random
+def label_illustration(labeled_im):
+    label_to_color = {}
+    r_channel = np.zeros(labeled_im.shape)
+    g_channel = np.zeros(labeled_im.shape)
+    b_channel = np.zeros(labeled_im.shape)
+    for i in range(labeled_im.shape[0]):
+        for j in range(labeled_im.shape[1]):
+            if labeled_im[i][j] == 0:
+                r = 255
+                g = 255
+                b = 255
+            elif labeled_im[i][j] in label_to_color:
+                r = label_to_color[labeled_im[i][j]][0]
+                g = label_to_color[labeled_im[i][j]][1]
+                b = label_to_color[labeled_im[i][j]][2]
+            else:
+                r = random.randint(0,255)
+                g = random.randint(0,255)
+                b = random.randint(0,255)
+                label_to_color[labeled_im[i][j]] = (r, g, b)
+            r_channel[i][j] = r
+            g_channel[i][j] = g
+            b_channel[i][j] = b
+    
+    new_img = Image.fromarray(np.dstack((r_channel, g_channel, b_channel)).astype(np.uint8))
+    new_img.save("labeled_image.jpg")
+
 # preprocess('data/Friends/Train/Joey/joey (16).jpg')
 im = preprocess('data/leonardo.jpg')
 labeled_im, cur_label = label(im)
-print(labeled_im.shape)
+# label_illustration(labeled_im)
 
 ############ Calculating centre of mass and orientation and grouping ############
 def calculate_mu(x_coords, y_coords, x_bar, y_bar, p, q):
