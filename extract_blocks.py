@@ -9,7 +9,7 @@ from skimage.morphology import (erosion, dilation, closing, opening,
 def preprocess(image_name):
     # Tunable parameters. Can play around with these
     f = 11 # Boosting factor
-    threshold = 10 # Threshold for binary image
+    threshold = 25 # Threshold for binary image
 
     im = np.array(Image.open(image_name).convert("L"))
 
@@ -144,8 +144,8 @@ def label_illustration(labeled_im):
     new_img = Image.fromarray(np.dstack((r_channel, g_channel, b_channel)).astype(np.uint8))
     new_img.save("labeled_image.jpg")
 
-# im = preprocess('data/Friends/Train/Joey/joey (44).jpg')
-im = preprocess('data/leonardo.jpg')
+im = preprocess('data/test_face.jpg')
+# im = preprocess('data/leonardo.jpg')
 labeled_im, cur_label = label(im)
 # label_illustration(labeled_im)
 
@@ -162,10 +162,10 @@ def get_component_indices(labeled_im, cur_label):
     x_bar_all = np.zeros(cur_label)
     y_bar_all = np.zeros(cur_label)
     theta_all = np.zeros(cur_label)
-    x_coords_all = [[]]
-    y_coords_all = [[]]
+    x_coords_all = []
+    y_coords_all = []
     for cur_label in range(1, cur_label + 1):
-        if cur_label == 1: continue
+        # print(cur_label)
         x_coords = np.where( labeled_im == cur_label )[0] 
         y_coords = np.where( labeled_im == cur_label )[1] 
         x_coords_all.append(x_coords)
@@ -175,6 +175,8 @@ def get_component_indices(labeled_im, cur_label):
         x_bar_all[cur_label - 1] = int( np.average(x_coords) )
         y_bar_all[cur_label - 1] = int( np.average(y_coords) )
 
+        if (len(x_coords)>5000 or len(y_coords>5000)):
+            continue
         mu_1_1 = calculate_mu(x_coords, y_coords, x_bar_all[cur_label - 1], y_bar_all[cur_label - 1], 1, 1)
         mu_2_0 = calculate_mu(x_coords, y_coords, x_bar_all[cur_label - 1], y_bar_all[cur_label - 1], 2, 0)
         mu_0_2 = calculate_mu(x_coords, y_coords, x_bar_all[cur_label - 1], y_bar_all[cur_label - 1], 0, 2)
@@ -184,6 +186,22 @@ def get_component_indices(labeled_im, cur_label):
 
     return x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all
 
+test_im = np.zeros((100,100))
+for i in range(45,55):
+    test_im[50][i] = 1.
+    test_im[51][i] = 1.
+    test_im[60][i] = 2.
+    test_im[61][i] = 2.
+# x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all = get_component_indices(test_im, 2)
+# print(x_bar_all)
+# print(y_bar_all)
+# print(theta_all)
+# print(block_number_coords)
+# print(x_coords_all)
+# print(y_coords_all)
+# print(len(np.unique(labeled_im)))
+# print(cur_label)
+# print(labeled_im.shape[0]*labeled_im.shape[1])
 x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all = get_component_indices(labeled_im, cur_label)
 
 def find_blocks_within_radius(cur_block_idx, labeled_im, x_bar, y_bar, radius):
@@ -219,7 +237,7 @@ def find_nearest_block(cur_block_idx, blocks_within_radius, x_bar, y_bar):
     return min_distance_block 
 
 def grouping(labeled_im, cur_label, block_number_coords, x_bar, y_bar, x_coords_all, y_coords_all):
-    N_max = 30 #??????? This changes based on the image - need to test different values
+    N_max = 400 #??????? This changes based on the image - need to test different values
     for N in range(1, N_max + 1):
         radius = 8 - ( 6 * ( (N - 1) / (N_max - 1) ) )
         count = 0
@@ -250,6 +268,13 @@ def grouping(labeled_im, cur_label, block_number_coords, x_bar, y_bar, x_coords_
 
                 labeled_im[x_coords, y_coords] = block_to_merge_with
                 block_number_coords[block_to_merge_with-1] = block_number_coords[block_to_merge_with-1] + block_number_coords[block_to_merge-1]
+                block_number_coords[block_to_merge-1] = 0
+                new_x_coords = np.append(x_coords_all[block_to_merge_with-1], x_coords)
+                new_y_coords = np.append(y_coords_all[block_to_merge_with-1], y_coords)
+                x_coords_all[block_to_merge_with-1] = new_x_coords
+                y_coords_all[block_to_merge_with-1] = new_y_coords
+                x_coords_all[block_to_merge-1] = np.array([])
+                y_coords_all[block_to_merge-1] = np.array([])
 
     return labeled_im
 
