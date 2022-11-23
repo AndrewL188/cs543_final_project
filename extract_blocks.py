@@ -144,7 +144,7 @@ def label_illustration(labeled_im):
     new_img = Image.fromarray(np.dstack((r_channel, g_channel, b_channel)).astype(np.uint8))
     new_img.save("labeled_image.jpg")
 
-# preprocess('data/Friends/Train/Joey/joey (16).jpg')
+# im = preprocess('data/Friends/Train/Joey/joey (44).jpg')
 im = preprocess('data/leonardo.jpg')
 labeled_im, cur_label = label(im)
 # label_illustration(labeled_im)
@@ -199,7 +199,7 @@ def find_blocks_within_radius(cur_block_idx, labeled_im, x_bar, y_bar, radius):
         max_x = int(np.ceil(x_bar + x_diff))
 
         for x in range(min_x + 1, max_x):
-            if x < labeled_im.shape[0] and y < labeled_im.shape[1] and labeled_im[x,y] != 0 and labeled_im[x,y] != cur_block_idx:
+            if x < labeled_im.shape[0] and y < labeled_im.shape[1] and labeled_im[x,y] != 0 and labeled_im[x,y] != cur_block_idx+1:
                 if labeled_im[x,y] not in blocks_within_radius:
                     blocks_within_radius.append(labeled_im[x,y])
     return blocks_within_radius
@@ -224,26 +224,35 @@ def grouping(labeled_im, cur_label, block_number_coords, x_bar, y_bar, x_coords_
         radius = 8 - ( 6 * ( (N - 1) / (N_max - 1) ) )
         count = 0
         for i in range(cur_label):
-            if i == 0: continue
             blocks_within_radius = []
             if block_number_coords[i] == N:
                 blocks_within_radius = find_blocks_within_radius(i, labeled_im, x_bar[i], y_bar[i], radius)
+            else:
+                continue
 
             if len(blocks_within_radius) > 0:
                 nearest_block = int(find_nearest_block(i, blocks_within_radius, x_bar, y_bar))
+            else:
+                continue
 
             #lies on same axis if any of the x coordinates are the same
-            lies_on_same_axis = bool(set(x_coords_all[nearest_block - 1]) & set(x_coords_all[i]))
+            # lies_on_same_axis = bool(set(x_coords_all[nearest_block - 1]) & set(x_coords_all[i]))
+            lies_on_same_axis = False
             if block_number_coords[nearest_block - 1] < N_max or lies_on_same_axis:
                 block_to_merge_with = max(i + 1, nearest_block)
                 block_to_merge = min(i + 1, nearest_block)
+
+                # print(str(i+1) + " " + str(nearest_block))
+                # print(str(block_to_merge_with) + " " + str(block_to_merge))
 
                 x_coords = x_coords_all[block_to_merge - 1]
                 y_coords = y_coords_all[block_to_merge - 1]
 
                 labeled_im[x_coords, y_coords] = block_to_merge_with
+                block_number_coords[block_to_merge_with-1] = block_number_coords[block_to_merge_with-1] + block_number_coords[block_to_merge-1]
 
     return labeled_im
 
 labeled_im = grouping(labeled_im, cur_label, block_number_coords, x_bar_all, y_bar_all, x_coords_all, y_coords_all)
 print(len(np.unique(labeled_im)))
+label_illustration(labeled_im)
