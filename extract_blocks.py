@@ -122,6 +122,7 @@ def label_illustration(labeled_im):
     r_channel = np.zeros(labeled_im.shape)
     g_channel = np.zeros(labeled_im.shape)
     b_channel = np.zeros(labeled_im.shape)
+    ctr = 0
     for i in range(labeled_im.shape[0]):
         for j in range(labeled_im.shape[1]):
             if labeled_im[i][j] == 0:
@@ -136,7 +137,13 @@ def label_illustration(labeled_im):
                 r = random.randint(0,255)
                 g = random.randint(0,255)
                 b = random.randint(0,255)
+                # ctr += 1
+                # if (ctr > 11):
+                #     r = 255
+                #     g = 255
+                #     b = 255
                 label_to_color[labeled_im[i][j]] = (r, g, b)
+                
             r_channel[i][j] = r
             g_channel[i][j] = g
             b_channel[i][j] = b
@@ -144,9 +151,9 @@ def label_illustration(labeled_im):
     new_img = Image.fromarray(np.dstack((r_channel, g_channel, b_channel)).astype(np.uint8))
     new_img.save("labeled_image.jpg")
 
-im = preprocess('data/test_face.jpg')
+# im = preprocess('data/test_face.jpg')
 # im = preprocess('data/leonardo.jpg')
-labeled_im, cur_label = label(im)
+# labeled_im, cur_label = label(im)
 # label_illustration(labeled_im)
 
 ############ Calculating centre of mass and orientation and grouping ############
@@ -186,12 +193,12 @@ def get_component_indices(labeled_im, cur_label):
 
     return x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all
 
-test_im = np.zeros((100,100))
-for i in range(45,55):
-    test_im[50][i] = 1.
-    test_im[51][i] = 1.
-    test_im[60][i] = 2.
-    test_im[61][i] = 2.
+# test_im = np.zeros((100,100))
+# for i in range(45,55):
+#     test_im[50][i] = 1.
+#     test_im[51][i] = 1.
+#     test_im[60][i] = 2.
+#     test_im[61][i] = 2.
 # x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all = get_component_indices(test_im, 2)
 # print(x_bar_all)
 # print(y_bar_all)
@@ -202,7 +209,7 @@ for i in range(45,55):
 # print(len(np.unique(labeled_im)))
 # print(cur_label)
 # print(labeled_im.shape[0]*labeled_im.shape[1])
-x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all = get_component_indices(labeled_im, cur_label)
+# x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all = get_component_indices(labeled_im, cur_label)
 
 def find_blocks_within_radius(cur_block_idx, labeled_im, x_bar, y_bar, radius):
     min_y = int(np.floor(y_bar - radius))
@@ -237,7 +244,7 @@ def find_nearest_block(cur_block_idx, blocks_within_radius, x_bar, y_bar):
     return min_distance_block 
 
 def grouping(labeled_im, cur_label, block_number_coords, x_bar, y_bar, x_coords_all, y_coords_all):
-    N_max = 400 #??????? This changes based on the image - need to test different values
+    N_max = 80 #??????? This changes based on the image - need to test different values
     for N in range(1, N_max + 1):
         radius = 8 - ( 6 * ( (N - 1) / (N_max - 1) ) )
         count = 0
@@ -255,29 +262,98 @@ def grouping(labeled_im, cur_label, block_number_coords, x_bar, y_bar, x_coords_
 
             #lies on same axis if any of the x coordinates are the same
             # lies_on_same_axis = bool(set(x_coords_all[nearest_block - 1]) & set(x_coords_all[i]))
-            lies_on_same_axis = False
-            if block_number_coords[nearest_block - 1] < N_max or lies_on_same_axis:
-                block_to_merge_with = max(i + 1, nearest_block)
-                block_to_merge = min(i + 1, nearest_block)
+            # lies_on_same_axis = False
+            # if block_number_coords[nearest_block - 1] < N_max or lies_on_same_axis:
+            block_to_merge_with = max(i + 1, nearest_block)
+            block_to_merge = min(i + 1, nearest_block)
 
-                # print(str(i+1) + " " + str(nearest_block))
-                # print(str(block_to_merge_with) + " " + str(block_to_merge))
+            # print(str(i+1) + " " + str(nearest_block))
+            # print(str(block_to_merge_with) + " " + str(block_to_merge))
 
-                x_coords = x_coords_all[block_to_merge - 1]
-                y_coords = y_coords_all[block_to_merge - 1]
+            x_coords = x_coords_all[block_to_merge - 1]
+            y_coords = y_coords_all[block_to_merge - 1]
 
-                labeled_im[x_coords, y_coords] = block_to_merge_with
-                block_number_coords[block_to_merge_with-1] = block_number_coords[block_to_merge_with-1] + block_number_coords[block_to_merge-1]
-                block_number_coords[block_to_merge-1] = 0
-                new_x_coords = np.append(x_coords_all[block_to_merge_with-1], x_coords)
-                new_y_coords = np.append(y_coords_all[block_to_merge_with-1], y_coords)
-                x_coords_all[block_to_merge_with-1] = new_x_coords
-                y_coords_all[block_to_merge_with-1] = new_y_coords
-                x_coords_all[block_to_merge-1] = np.array([])
-                y_coords_all[block_to_merge-1] = np.array([])
+            labeled_im[x_coords, y_coords] = block_to_merge_with
+            block_number_coords[block_to_merge_with-1] = block_number_coords[block_to_merge_with-1] + block_number_coords[block_to_merge-1]
+            block_number_coords[block_to_merge-1] = 0
+            new_x_coords = np.append(x_coords_all[block_to_merge_with-1], x_coords)
+            new_y_coords = np.append(y_coords_all[block_to_merge_with-1], y_coords)
+            x_coords_all[block_to_merge_with-1] = new_x_coords
+            y_coords_all[block_to_merge_with-1] = new_y_coords
+            x_coords_all[block_to_merge-1] = np.array([])
+            y_coords_all[block_to_merge-1] = np.array([])
 
     return labeled_im
 
-labeled_im = grouping(labeled_im, cur_label, block_number_coords, x_bar_all, y_bar_all, x_coords_all, y_coords_all)
-print(len(np.unique(labeled_im)))
-label_illustration(labeled_im)
+# Make labels consecutive in order after grouping
+def relabel_grouped_im(labeled_im, num_labels):
+    old_label_to_new_map = {}
+    ctr = 0
+    for i in range(labeled_im.shape[0]):
+        for j in range(labeled_im.shape[1]):
+            if labeled_im[i][j] == 0:
+                continue
+            if labeled_im[i][j] not in old_label_to_new_map:
+                ctr += 1
+                old_label_to_new_map[labeled_im[i][j]] = ctr
+            labeled_im[i][j] = old_label_to_new_map[labeled_im[i][j]]
+    if ctr != num_labels:
+        print("something broke")
+        print(ctr)
+        print(num_labels)
+
+# For testing
+def use_only_good_labels(labeled_im, labels_to_use):
+    num_labels = len(labels_to_use)
+    old_label_to_new_map = {}
+    ctr = 0
+    for i in range(labeled_im.shape[0]):
+        for j in range(labeled_im.shape[1]):
+            if labeled_im[i][j] == 0:
+                continue
+            if labeled_im[i][j] not in labels_to_use:
+                labeled_im[i][j] = 0
+                continue
+            if labeled_im[i][j] not in old_label_to_new_map:
+                ctr += 1
+                old_label_to_new_map[labeled_im[i][j]] = ctr
+            labeled_im[i][j] = old_label_to_new_map[labeled_im[i][j]]
+    if ctr != num_labels:
+        print("something broke")
+        print(ctr)
+        print(num_labels)
+
+            
+# Default 60 length for testing
+# Need to find a way to find length of semimajor axis
+def get_block_lengths(x_bar_all, y_bar_all, theta_all, x_coords_all, y_coords_all):
+    block_lengths = np.zeros(len(theta_all))
+    for i in range(len(block_lengths)):
+        block_lengths[i] = 60
+    return block_lengths
+
+from matching import Matching, Block
+def classifyFace(image_name):
+    im = preprocess(image_name)
+    labeled_im, cur_label = label(im)
+    x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all = get_component_indices(labeled_im, cur_label)
+    labeled_im = grouping(labeled_im, cur_label, block_number_coords, x_bar_all, y_bar_all, x_coords_all, y_coords_all)
+    print(str(len(np.unique(labeled_im))) + " Connected Components")
+    num_labels = len(np.unique(labeled_im)) - 1
+    relabel_grouped_im(labeled_im, num_labels)
+
+    # good_labels = {1, 4, 6, 7, 10, 12, 14}
+    # 7 10 12 14
+    # use_only_good_labels(labeled_im, good_labels)
+
+    label_illustration(labeled_im)
+    x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all = get_component_indices(labeled_im, num_labels)
+    block_lengths = get_block_lengths(x_bar_all, y_bar_all, theta_all, x_coords_all, y_coords_all)
+
+
+    # blocks = []
+    # for i in range(len(block_lengths)):
+    #     blocks.append(Block(x_bar_all[i], y_bar_all[i], theta_all[i], block_lengths[i]))
+    # print(Matching(blocks))
+
+classifyFace('data/test_face.jpg')
