@@ -9,7 +9,7 @@ from skimage.morphology import (erosion, dilation, closing, opening,
 def preprocess(image_name):
     # Tunable parameters. Can play around with these
     f = 11 # Boosting factor
-    threshold = 25 # Threshold for binary image
+    threshold = 30 # Threshold for binary image
 
     im = np.array(Image.open(image_name).convert("L"))
 
@@ -67,21 +67,27 @@ def preprocess(image_name):
             else:
                 boosted_im[i][j] = 0
 
-    # new_img = Image.fromarray(boosted_im.astype(np.uint8))
-    # new_img.save("boosted.jpg")
+    new_img = Image.fromarray(boosted_im.astype(np.uint8))
+    new_img.save("boosted.jpg")
     return boosted_im
 
 # Returns the neighbors of a given point
 def neighbors(im, point):
     res = []
-    if (point[0] < im.shape[0] - 1):
-        res.append((point[0]+1, point[1]))
-    if (point[0] > 1):
-        res.append((point[0]-1, point[1]))
-    if (point[1] < im.shape[1] - 1):
-        res.append((point[0], point[1]+1))
-    if (point[1] > 1):
-        res.append((point[0], point[1]-1))
+    for i in range(point[0]-1, point[0]+2):
+        for j in range(point[1]-1, point[1]+2):
+            if (i == point[0] and j == point[1]):
+                continue
+            if i > 0 and i < im.shape[0] and j > 0 and j < im.shape[1]:
+                res.append((i,j))
+    # if (point[0] < im.shape[0] - 1):
+    #     res.append((point[0]+1, point[1]))
+    # if (point[0] > 1):
+    #     res.append((point[0]-1, point[1]))
+    # if (point[1] < im.shape[1] - 1):
+    #     res.append((point[0], point[1]+1))
+    # if (point[1] > 1):
+    #     res.append((point[0], point[1]-1))
     return res
 
 def search(labeled_im, cur_label, r, c):
@@ -138,7 +144,7 @@ def label_illustration(labeled_im):
                 g = random.randint(0,255)
                 b = random.randint(0,255)
                 # ctr += 1
-                # if (ctr > 11):
+                # if (ctr > 19):
                 #     r = 255
                 #     g = 255
                 #     b = 255
@@ -159,19 +165,23 @@ def label_illustration(labeled_im):
 ############ Calculating centre of mass and orientation and grouping ############
 def calculate_mu(x_coords, y_coords, x_bar, y_bar, p, q):
     mu = 0
-    for i in range(len(x_coords)):
-        for j in range(len(y_coords)):
-            mu += np.power((x_coords[i] - x_bar),p) * np.power((y_coords[j] - y_bar),q)
+    x_diff = np.power(y_coords - y_bar, p)
+    y_diff = np.power(x_coords - x_bar, q)
+    mu = np.sum(x_diff)
+    mu += np.sum(y_diff)
+    # for i in range(len(x_coords)):
+    #     for j in range(len(y_coords)):
+    #         mu += np.power((x_coords[i] - x_bar),p) * np.power((y_coords[j] - y_bar),q)
     return mu
 
-def get_component_indices(labeled_im, cur_label):
-    block_number_coords = np.zeros(cur_label)
-    x_bar_all = np.zeros(cur_label)
-    y_bar_all = np.zeros(cur_label)
-    theta_all = np.zeros(cur_label)
+def get_component_indices(labeled_im, num_labels):
+    block_number_coords = np.zeros(num_labels)
+    x_bar_all = np.zeros(num_labels)
+    y_bar_all = np.zeros(num_labels)
+    theta_all = np.zeros(num_labels)
     x_coords_all = []
     y_coords_all = []
-    for cur_label in range(1, cur_label + 1):
+    for cur_label in range(1, num_labels + 1):
         # print(cur_label)
         x_coords = np.where( labeled_im == cur_label )[0] 
         y_coords = np.where( labeled_im == cur_label )[1] 
@@ -179,16 +189,17 @@ def get_component_indices(labeled_im, cur_label):
         y_coords_all.append(y_coords)
         block_number_coords[cur_label - 1] = len(x_coords)
 
-        x_bar_all[cur_label - 1] = int( np.average(x_coords) )
-        y_bar_all[cur_label - 1] = int( np.average(y_coords) )
+        x_bar_all[cur_label - 1] = np.average(x_coords)
+        y_bar_all[cur_label - 1] = np.average(y_coords)
 
-        if (len(x_coords)>5000 or len(y_coords>5000)):
+        if (len(x_coords)>5000 or len(y_coords)>5000 or num_labels > 100):
             continue
         mu_1_1 = calculate_mu(x_coords, y_coords, x_bar_all[cur_label - 1], y_bar_all[cur_label - 1], 1, 1)
         mu_2_0 = calculate_mu(x_coords, y_coords, x_bar_all[cur_label - 1], y_bar_all[cur_label - 1], 2, 0)
         mu_0_2 = calculate_mu(x_coords, y_coords, x_bar_all[cur_label - 1], y_bar_all[cur_label - 1], 0, 2)
 
-        if (mu_2_0 - mu_0_2) == 0: continue
+        if (mu_2_0 - mu_0_2) == 0: 
+            continue
         theta_all[cur_label - 1] = 0.5 * ( np.arctan2( 2*mu_1_1, (mu_2_0 - mu_0_2) ) )
 
     return x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all
@@ -199,17 +210,15 @@ def get_component_indices(labeled_im, cur_label):
 #     test_im[51][i] = 1.
 #     test_im[60][i] = 2.
 #     test_im[61][i] = 2.
-# x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all = get_component_indices(test_im, 2)
+#     test_im[i][98] = 3.
+#     test_im[i][99] = 3.
+# x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all = get_component_indices(test_im, 3)
 # print(x_bar_all)
 # print(y_bar_all)
 # print(theta_all)
 # print(block_number_coords)
 # print(x_coords_all)
 # print(y_coords_all)
-# print(len(np.unique(labeled_im)))
-# print(cur_label)
-# print(labeled_im.shape[0]*labeled_im.shape[1])
-# x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all = get_component_indices(labeled_im, cur_label)
 
 def find_blocks_within_radius(cur_block_idx, labeled_im, x_bar, y_bar, radius):
     min_y = int(np.floor(y_bar - radius))
@@ -244,7 +253,7 @@ def find_nearest_block(cur_block_idx, blocks_within_radius, x_bar, y_bar):
     return min_distance_block 
 
 def grouping(labeled_im, cur_label, block_number_coords, x_bar, y_bar, x_coords_all, y_coords_all):
-    N_max = 80 #??????? This changes based on the image - need to test different values
+    N_max = 100 #??????? This changes based on the image - need to test different values
     for N in range(1, N_max + 1):
         radius = 8 - ( 6 * ( (N - 1) / (N_max - 1) ) )
         count = 0
@@ -338,22 +347,26 @@ def classifyFace(image_name):
     labeled_im, cur_label = label(im)
     x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all = get_component_indices(labeled_im, cur_label)
     labeled_im = grouping(labeled_im, cur_label, block_number_coords, x_bar_all, y_bar_all, x_coords_all, y_coords_all)
-    print(str(len(np.unique(labeled_im))) + " Connected Components")
+    print(str(len(np.unique(labeled_im)) - 1) + " Connected Components")
     num_labels = len(np.unique(labeled_im)) - 1
     relabel_grouped_im(labeled_im, num_labels)
 
-    # good_labels = {1, 4, 6, 7, 10, 12, 14}
-    # 7 10 12 14
+    # good_labels = {20, 21, 22, 23, 24, 25}
     # use_only_good_labels(labeled_im, good_labels)
-
+    # num_labels = len(np.unique(labeled_im)) - 1
     label_illustration(labeled_im)
+
     x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all = get_component_indices(labeled_im, num_labels)
     block_lengths = get_block_lengths(x_bar_all, y_bar_all, theta_all, x_coords_all, y_coords_all)
 
+    # print(x_bar_all)
+    # print(y_bar_all)
+    # print(theta_all)
 
-    # blocks = []
-    # for i in range(len(block_lengths)):
-    #     blocks.append(Block(x_bar_all[i], y_bar_all[i], theta_all[i], block_lengths[i]))
-    # print(Matching(blocks))
+
+    blocks = []
+    for i in range(len(block_lengths)):
+        blocks.append(Block(y_bar_all[i], x_bar_all[i], theta_all[i], block_lengths[i]))
+    print(Matching(blocks))
 
 classifyFace('data/test_face.jpg')
