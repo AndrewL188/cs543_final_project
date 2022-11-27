@@ -23,7 +23,7 @@ class Block:
         x2,y2 = other.GetCenter()
         return np.sqrt((self.x-x2)**2+(self.y-y2)**2)
 
-def Baseline(block1,block2,threshold):
+def Baseline(block1,block2,threshold=0.7):
     x1,y1 = block1.GetCenter()
     x2,y2 = block2.GetCenter()
     a = y2-y1
@@ -42,6 +42,7 @@ def Baseline(block1,block2,threshold):
     ep += (block2.GetAngle() - theta)**2
     ep = -1.2 *ep
     score = math.exp(ep)
+    #print(score)
     if score < threshold:
         return []
 
@@ -77,7 +78,10 @@ def Matching(blocks):
         for leb in range(length):
             if reb == leb:
                 continue
-
+            ret = Baseline(blocks[reb],blocks[leb])
+            if len(ret) == 0:
+                continue
+            
             for mouth in range(length):
                 if mouth == reb or mouth == leb:
                     continue
