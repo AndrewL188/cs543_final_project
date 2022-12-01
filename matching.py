@@ -28,6 +28,8 @@ def Baseline(block1,block2,threshold=0.7):
     x2,y2 = block2.GetCenter()
     a = y2-y1
     b = x1-x2
+    if b == 0:
+        return []
     c = x2 * y1 - x1 * y2
     theta = math.atan(-a/b)
     if theta < math.pi * -1/2 or theta >= math.pi/2:
@@ -90,8 +92,12 @@ def Matching(blocks):
                     if nose == mouth or nose == reb or nose == leb:
                         continue
                     score = TotalProbability(blocks[reb],blocks[leb],blocks[mouth],blocks[nose]) 
-                    if score > 0:
+                    if score > 0.7:
                         scores.append(score)
                         indices.append((reb,leb,mouth,nose))
 
-    return (len(scores) != 0)
+    max_idx = np.argmax(scores)
+    print(len(scores))
+    print("The block # for left eye, right eye, mouth and nose are ",indices[max_idx])
+    print("The score is ",scores[max_idx])
+    return indices[max_idx]
