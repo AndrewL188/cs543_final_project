@@ -336,9 +336,32 @@ def use_only_good_labels(labeled_im, labels_to_use):
 # Default 60 length for testing
 # Need to find a way to find length of semimajor axis
 def get_block_lengths(x_bar_all, y_bar_all, theta_all, x_coords_all, y_coords_all):
+    print(x_bar_all.shape)
     block_lengths = np.zeros(len(theta_all))
     for i in range(len(block_lengths)):
-        block_lengths[i] = 60
+        # if i == 8: print(x_coords_all[i], y_coords_all[i], theta_all[i])
+        x = np.linspace(min(x_coords_all[i]), max(x_coords_all[i]), num=max(x_coords_all[i]) - min(x_coords_all[i]) + 1)
+        y = np.linspace(min(y_coords_all[i]), max(y_coords_all[i]), num=max(y_coords_all[i]) - min(y_coords_all[i]) + 1)
+        # if i == 0: print(x,y)
+        max_x = -np.Inf
+        max_y = -np.Inf
+        min_x = np.Inf
+        min_y = np.Inf
+        for a in x:
+            for j in y:
+                alpha = a * np.cos(theta_all[i]) + j * np.sin(theta_all[i])
+                beta = -a * np.sin(theta_all[i]) + j * np.cos(theta_all[i]) 
+                if alpha < min_x:
+                    min_x = alpha
+                if alpha > max_x:
+                    max_x = alpha
+                if beta < min_y:
+                    min_y = beta
+                if beta > max_y:
+                    max_y = beta
+        block_lengths[i] = max(max_x - min_x, max_y - min_y)
+        
+#         block_lengths[i] = 60
     return block_lengths
 
 from matching import Matching, Block
@@ -358,7 +381,10 @@ def classifyFace(image_name):
 
     x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all = get_component_indices(labeled_im, num_labels)
     block_lengths = get_block_lengths(x_bar_all, y_bar_all, theta_all, x_coords_all, y_coords_all)
-
+    print("block lengths")
+    # print(x_bar_all, y_bar_all)
+    print(block_lengths)
+    print("block lengths end")
     # print(x_bar_all)
     # print(y_bar_all)
     # print(theta_all)
