@@ -336,12 +336,17 @@ def use_only_good_labels(labeled_im, labels_to_use):
 # Default 60 length for testing
 # Need to find a way to find length of semimajor axis
 def get_block_lengths(x_bar_all, y_bar_all, theta_all, x_coords_all, y_coords_all):
-    print(x_bar_all.shape)
     block_lengths = np.zeros(len(theta_all))
+    alpha_max = np.zeros(len(theta_all))
+    alpha_min = np.zeros(len(theta_all))
+    beta_max = np.zeros(len(theta_all))
+    beta_min = np.zeros(len(theta_all))
     for i in range(len(block_lengths)):
         # if i == 8: print(x_coords_all[i], y_coords_all[i], theta_all[i])
         x = np.linspace(min(x_coords_all[i]), max(x_coords_all[i]), num=max(x_coords_all[i]) - min(x_coords_all[i]) + 1)
         y = np.linspace(min(y_coords_all[i]), max(y_coords_all[i]), num=max(y_coords_all[i]) - min(y_coords_all[i]) + 1)
+        # print(min(x_coords_all[i]), max(x_coords_all[i]))
+        # print(min(y_coords_all[i]), max(y_coords_all[i]))
         # if i == 0: print(x,y)
         max_x = -np.Inf
         max_y = -np.Inf
@@ -360,9 +365,22 @@ def get_block_lengths(x_bar_all, y_bar_all, theta_all, x_coords_all, y_coords_al
                 if beta > max_y:
                     max_y = beta
         block_lengths[i] = max(max_x - min_x, max_y - min_y)
-        
+        # block_lengths[i] = max(max(x_coords_all[i]) - min(x_coords_all[i]), max(y_coords_all[i]) - min(y_coords_all[i]))
+        # alpha_max[i] = x_bar_all[i] + max_x
+        # alpha_min[i] = x_bar_all[i] - min_x
+        # beta_max[i] = y_bar_all[i] + max_y
+        # beta_min[i] = y_bar_all[i] - min_y
+
+        alpha_max[i] = max(x_coords_all[i])
+        alpha_min[i] = min(x_coords_all[i])
+        beta_max[i] = max(y_coords_all[i])
+        beta_min[i] = min(y_coords_all[i])
+    print('xxxxxxxxx')
+    print(alpha_max, alpha_min, beta_max, beta_min)
+    print('xxxxxxxxx')
 #         block_lengths[i] = 60
-    return block_lengths
+    print(min(x_coords_all[i]), max(x_coords_all[i]))
+    return block_lengths, alpha_max, alpha_min, beta_max, beta_min
 
 from matching import Matching, Block
 def classifyFace(image_name):
