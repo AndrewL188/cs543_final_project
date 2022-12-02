@@ -404,7 +404,7 @@ def classifyFace(image_name):
     remove_small_blocks(labeled_im, block_number_coords)
     print(str(len(np.unique(labeled_im)) - 1) + " Connected Components")
 
-    # good_labels = {1, 3}
+    # good_labels = {9, 10, 5, 8, 13, 11}
     # use_only_good_labels(labeled_im, good_labels)
     num_labels = len(np.unique(labeled_im)) - 1
     label_illustration(labeled_im)
@@ -419,9 +419,9 @@ def classifyFace(image_name):
     # print(theta_all)
 
 
-    # blocks = []
-    # for i in range(len(block_lengths)):
-    #     blocks.append(Block(y_bar_all[i], x_bar_all[i], theta_all[i], block_lengths[i]))
-    # print(Matching(blocks))
+    blocks = []
+    for i in range(len(block_lengths)):
+        blocks.append(Block(y_bar_all[i], x_bar_all[i], theta_all[i], block_lengths[i]))
+    print(Matching(blocks))
 
 classifyFace('data/test_face.jpg')
