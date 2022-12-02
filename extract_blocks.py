@@ -239,14 +239,14 @@ def find_blocks_within_radius(cur_block_idx, labeled_im, x_bar, y_bar, radius):
     return blocks_within_radius
 
 
-def find_nearest_block(cur_block_idx, blocks_within_radius, x_bar, y_bar):
+def find_nearest_block(cur_block_idx, blocks_within_radius, x_bar, y_bar, radius):
     min_distance_block = None
     min_distance = np.inf
     for block in blocks_within_radius:
         x_dist = np.power(x_bar[int(block - 1)] - x_bar[cur_block_idx], 2)
         y_dist = np.power(y_bar[int(block - 1)] - y_bar[cur_block_idx], 2)
         distance_to_cur_block = np.sqrt(x_dist + y_dist)
-        if distance_to_cur_block < min_distance:
+        if distance_to_cur_block < min_distance and distance_to_cur_block <= radius:
             min_distance = distance_to_cur_block
             min_distance_block = block
 
@@ -265,7 +265,10 @@ def grouping(labeled_im, cur_label, block_number_coords, x_bar, y_bar, x_coords_
                 continue
 
             if len(blocks_within_radius) > 0:
-                nearest_block = int(find_nearest_block(i, blocks_within_radius, x_bar, y_bar))
+                nearest_block = find_nearest_block(i, blocks_within_radius, x_bar, y_bar, radius)
+                if nearest_block is None:
+                    continue
+                nearest_block = int(nearest_block)
             else:
                 continue
 
@@ -375,12 +378,21 @@ def get_block_lengths(x_bar_all, y_bar_all, theta_all, x_coords_all, y_coords_al
         alpha_min[i] = min(x_coords_all[i])
         beta_max[i] = max(y_coords_all[i])
         beta_min[i] = min(y_coords_all[i])
-    print('xxxxxxxxx')
-    print(alpha_max, alpha_min, beta_max, beta_min)
-    print('xxxxxxxxx')
+    # print('xxxxxxxxx')
+    # print(alpha_max, alpha_min, beta_max, beta_min)
+    # print('xxxxxxxxx')
 #         block_lengths[i] = 60
-    print(min(x_coords_all[i]), max(x_coords_all[i]))
+    # print(min(x_coords_all[i]), max(x_coords_all[i]))
     return block_lengths, alpha_max, alpha_min, beta_max, beta_min
+
+def remove_small_blocks(labeled_im, block_number_coords, threshold = 30):
+    for i in range(labeled_im.shape[0]):
+        for j in range(labeled_im.shape[1]):
+            if block_number_coords[int(labeled_im[i][j] - 1)] < threshold:
+                labeled_im[i][j] = 0
+    
+    num_labels = len(np.unique(labeled_im)) - 1
+    relabel_grouped_im(labeled_im, num_labels)
 
 from matching import Matching, Block
 def classifyFace(image_name):
@@ -388,29 +400,28 @@ def classifyFace(image_name):
     labeled_im, cur_label = label(im)
     x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all = get_component_indices(labeled_im, cur_label)
     labeled_im = grouping(labeled_im, cur_label, block_number_coords, x_bar_all, y_bar_all, x_coords_all, y_coords_all)
+    # print(str(len(np.unique(labeled_im)) - 1) + " Connected Components")
+    remove_small_blocks(labeled_im, block_number_coords)
     print(str(len(np.unique(labeled_im)) - 1) + " Connected Components")
-    num_labels = len(np.unique(labeled_im)) - 1
-    relabel_grouped_im(labeled_im, num_labels)
 
-    # good_labels = {20, 21, 22, 23, 24, 25}
+    # good_labels = {1, 3}
     # use_only_good_labels(labeled_im, good_labels)
-    # num_labels = len(np.unique(labeled_im)) - 1
+    num_labels = len(np.unique(labeled_im)) - 1
     label_illustration(labeled_im)
 
     x_bar_all, y_bar_all, theta_all, block_number_coords, x_coords_all, y_coords_all = get_component_indices(labeled_im, num_labels)
-    block_lengths = get_block_lengths(x_bar_all, y_bar_all, theta_all, x_coords_all, y_coords_all)
-    print("block lengths")
-    # print(x_bar_all, y_bar_all)
-    print(block_lengths)
-    print("block lengths end")
+    block_lengths, alpha_max, alpha_min, beta_max, beta_min = get_block_lengths(x_bar_all, y_bar_all, theta_all, x_coords_all, y_coords_all)
+
+    # print(block_lengths)
+    # print(block_number_coords)
     # print(x_bar_all)
     # print(y_bar_all)
     # print(theta_all)
 
 
-    blocks = []
-    for i in range(len(block_lengths)):
-        blocks.append(Block(y_bar_all[i], x_bar_all[i], theta_all[i], block_lengths[i]))
-    print(Matching(blocks))
+    # blocks = []
+    # for i in range(len(block_lengths)):
+    #     blocks.append(Block(y_bar_all[i], x_bar_all[i], theta_all[i], block_lengths[i]))
+    # print(Matching(blocks))
 
 classifyFace('data/test_face.jpg')
