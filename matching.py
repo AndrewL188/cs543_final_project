@@ -58,8 +58,8 @@ def ComputeProbability(a,b,c,D,block,factor):
     ep =-4.8 * (ep ** 2)
     return math.exp(ep)
 
-def TotalProbability(reb,leb,mouth,nose,Weights=[0.5,0.2,0.1,0.1,0.1],Factors=[1,0.3,0.6],threshold=0.7):
-    ret = Baseline(reb,leb,threshold)
+def TotalProbability(le,re,reb,leb,mouth,nose,Weights=[0.5,0.2,0.1,0.1,0.1],Factors=[1,0.3,0.6],threshold=0.7):
+    ret = Baseline(re,le,threshold)
     if len(ret) == 0:
         return 0
     
@@ -75,29 +75,37 @@ def Matching(blocks):
     scores = []
     indices = []
     length = len(blocks)
-    for reb in range(length):
-
-        for leb in range(length):
-            if reb == leb:
+    for le in range(length):
+        
+        for re in range(length):
+            if re == le:
                 continue
-            ret = Baseline(blocks[reb],blocks[leb])
+            ret = Baseline(blocks[le],blocks[re])
             if len(ret) == 0:
                 continue
-            
-            for mouth in range(length):
-                if mouth == reb or mouth == leb:
+
+            for reb in range(length):
+                if reb == le or reb == re:
                     continue
-                    
-                for nose in range(length):
-                    if nose == mouth or nose == reb or nose == leb:
+
+                for leb in range(length):
+                    if leb == le or leb == re or leb == reb:
                         continue
-                    score = TotalProbability(blocks[reb],blocks[leb],blocks[mouth],blocks[nose]) 
-                    if score > 0.7:
-                        scores.append(score)
-                        indices.append((reb,leb,mouth,nose))
+
+                    for mouth in range(length):
+                        if mouth == reb or mouth == leb or mouth == le or mouth == re:
+                            continue
+
+                        for nose in range(length):
+                            if nose == mouth or nose == reb or nose == leb or nose == le or nose == re:
+                                continue
+                            score = TotalProbability(blocks[le],blocks[re],blocks[reb],blocks[leb],blocks[mouth],blocks[nose]) 
+                            if score > 0.5:
+                                scores.append(score)
+                                indices.append((le,re,reb,leb,mouth,nose))
 
     max_idx = np.argmax(scores)
     print(len(scores))
-    print("The block # for left eye, right eye, mouth and nose are ",indices[max_idx])
+    print("The block # for left eye, right eye, left eyebrow, right eyebrow, mouth and nose are ",indices[max_idx])
     print("The score is ",scores[max_idx])
     return indices[max_idx]
