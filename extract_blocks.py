@@ -419,9 +419,9 @@ def classifyFace(image_name):
     # print(theta_all)
 
 
-    blocks = []
-    for i in range(len(block_lengths)):
-        blocks.append(Block(y_bar_all[i], x_bar_all[i], theta_all[i], block_lengths[i]))
-    print(Matching(blocks))
+    # blocks = []
+    # for i in range(len(block_lengths)):
+    #     blocks.append(Block(y_bar_all[i], x_bar_all[i], theta_all[i], block_lengths[i]))
+    # print(Matching(blocks))
 
-classifyFace('data/test_face.jpg')
+classifyFace('data/working_images/test_face7.jpg')
