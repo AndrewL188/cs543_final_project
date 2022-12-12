@@ -385,7 +385,7 @@ def get_block_lengths(x_bar_all, y_bar_all, theta_all, x_coords_all, y_coords_al
     # print(min(x_coords_all[i]), max(x_coords_all[i]))
     return block_lengths, alpha_max, alpha_min, beta_max, beta_min
 
-def remove_small_blocks(labeled_im, block_number_coords, threshold = 30):
+def remove_small_blocks(labeled_im, block_number_coords, threshold = 27):
     for i in range(labeled_im.shape[0]):
         for j in range(labeled_im.shape[1]):
             if block_number_coords[int(labeled_im[i][j] - 1)] < threshold:
@@ -424,4 +424,4 @@ def classifyFace(image_name):
     #     blocks.append(Block(y_bar_all[i], x_bar_all[i], theta_all[i], block_lengths[i]))
     # print(Matching(blocks))
 
-classifyFace('data/working_images/test_face7.jpg')
+classifyFace('data/working_images/test_face11.webp')
